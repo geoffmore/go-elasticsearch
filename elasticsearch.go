@@ -35,7 +35,9 @@ type Config struct {
 	Password  string   // Password for HTTP Basic Authentication.
 
 	CloudID string // Endpoint for the Elastic Service (https://elastic.co/cloud).
-	APIKey  string // Base64-encoded token for authorization; if set, overrides username and password.
+
+	APIKey string // Base64-encoded token for authorization; if set, overrides username, password, and token
+	Token  string // Token used for authorization. if set, overrides username and password.
 
 	RetryOnStatus        []int // List of status codes for retry. Default: 502, 503, 504.
 	DisableRetry         bool  // Default: false.
@@ -138,7 +140,9 @@ func NewClient(cfg Config) (*Client, error) {
 		URLs:     urls,
 		Username: cfg.Username,
 		Password: cfg.Password,
-		APIKey:   cfg.APIKey,
+
+		APIKey: cfg.APIKey,
+		Token:  cfg.Token,
 
 		RetryOnStatus:        cfg.RetryOnStatus,
 		DisableRetry:         cfg.DisableRetry,
