@@ -1,7 +1,7 @@
 # $ go mod vendor
-# $ docker build --tag elastic/go-elasticsearch-demo-xkcdsearch .
+# $ docker build --tag geoffmore/go-elasticsearch-demo-xkcdsearch .
 #
-# $ docker run -it --network elasticsearch --name xkcdsearch-demo --publish 8000:8000 --rm elastic/go-elasticsearch-demo-xkcdsearch
+# $ docker run -it --network elasticsearch --name xkcdsearch-demo --publish 8000:8000 --rm geoffmore/go-elasticsearch-demo-xkcdsearch
 #
 FROM golang:1.11-alpine AS Builder
 

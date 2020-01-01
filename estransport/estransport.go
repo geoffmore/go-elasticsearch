@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v8/internal/version"
+	"github.com/geoffmore/go-elasticsearch/v8/internal/version"
 )
 
 // Version returns the package version as a string.

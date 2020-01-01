@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/elastic/go-elasticsearch/v8/estransport"
+	"github.com/geoffmore/go-elasticsearch/v8/estransport"
 )
 
 func BenchmarkTransportLogger(b *testing.B) {

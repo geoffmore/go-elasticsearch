@@ -1,5 +1,5 @@
-# $ docker build --tag elastic/go-elasticsearch-demo-instrumentation .
-# $ docker run -it --network instrumentation_elasticstack --rm elastic/go-elasticsearch-demo-instrumentation
+# $ docker build --tag geoffmore/go-elasticsearch-demo-instrumentation .
+# $ docker run -it --network instrumentation_elasticstack --rm geoffmore/go-elasticsearch-demo-instrumentation
 #
 FROM golang:1-alpine
 

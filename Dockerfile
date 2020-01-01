@@ -1,6 +1,6 @@
-# $ docker build --file Dockerfile --tag elastic/go-elasticsearch .
+# $ docker build --file Dockerfile --tag geoffmore/go-elasticsearch .
 #
-# $ docker run -it --network elasticsearch --volume $PWD/tmp:/tmp:rw --rm elastic/go-elasticsearch gotestsum --format=short-verbose --junitfile=/tmp/integration-junit.xml -- --cover --coverprofile=/tmp/integration-coverage.out --tags='integration' -v ./...
+# $ docker run -it --network elasticsearch --volume $PWD/tmp:/tmp:rw --rm geoffmore/go-elasticsearch gotestsum --format=short-verbose --junitfile=/tmp/integration-junit.xml -- --cover --coverprofile=/tmp/integration-coverage.out --tags='integration' -v ./...
 #
 
 ARG  VERSION=1-alpine

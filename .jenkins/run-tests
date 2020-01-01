@@ -35,7 +35,7 @@ TIMEFORMAT="(Duration: %0lR)"
 echo -e "\033[1m>>>>> SETUP [$TEST_SUITE] >>>>>>>>>>>>>>>>>>>>>>>>>>>>>\033[0m"
 
 # Build the go-elasticsearch image
-docker build --file Dockerfile --tag elastic/go-elasticsearch .
+docker build --file Dockerfile --tag geoffmore/go-elasticsearch .
 
 # Launch a single Elasticsearch node
 (make cluster detached=true version=$elasticsearch_image)
@@ -48,8 +48,8 @@ ELASTICSEARCH_BUILD_HASH=$(docker run --network elasticsearch --rm appropriate/c
 echo -e ">>>>> Downloading Elasticsearch repository @ $ELASTICSEARCH_BUILD_HASH..."
 time docker run --rm appropriate/curl --retry 3 -sSL "https://github.com/elastic/elasticsearch/archive/$ELASTICSEARCH_BUILD_HASH.zip" > "/tmp/elasticsearch-$ELASTICSEARCH_BUILD_HASH.zip"
 echo -e ">>>>> Extracting and storing to [elasticsearch-source] container..."
-time docker run --volume=/tmp:/tmp --workdir=/tmp --rm elastic/go-elasticsearch unzip -q -o "elasticsearch-$ELASTICSEARCH_BUILD_HASH.zip" '*.properties' '*.json' '*.y*ml'
-docker run --volume=/tmp:/tmp --workdir=/tmp --rm elastic/go-elasticsearch /bin/sh -c "
+time docker run --volume=/tmp:/tmp --workdir=/tmp --rm geoffmore/go-elasticsearch unzip -q -o "elasticsearch-$ELASTICSEARCH_BUILD_HASH.zip" '*.properties' '*.json' '*.y*ml'
+docker run --volume=/tmp:/tmp --workdir=/tmp --rm geoffmore/go-elasticsearch /bin/sh -c "
   rm -rf /tmp/elasticsearch-$ELASTICSEARCH_BUILD_HASH.zip
   rm -rf /tmp/elasticsearch/
   mv /tmp/elasticsearch-$ELASTICSEARCH_BUILD_HASH* /tmp/elasticsearch/
@@ -70,7 +70,7 @@ docker run \
   --volumes-from "elasticsearch-source" \
   --rm \
   --detach \
-  elastic/go-elasticsearch sleep 3600
+  geoffmore/go-elasticsearch sleep 3600
 
 # Run the tests
 # NOTE: Conditions needed to prevent early exit due to the 'set -e' option

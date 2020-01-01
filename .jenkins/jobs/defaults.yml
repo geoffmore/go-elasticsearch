@@ -20,7 +20,7 @@
           &lt;commitId&gt;, etc.)
     properties:
     - github:
-        url: https://github.com/elastic/go-elasticsearch/
+        url: https://github.com/geoffmore/go-elasticsearch/
     - inject:
         properties-content: HOME=$JENKINS_HOME
     concurrent: true
@@ -32,7 +32,7 @@
         reference-repo: /var/lib/jenkins/.git-references/go-elasticsearch.git
         branches:
         - ${branch_specifier}
-        url: git@github.com:elastic/go-elasticsearch.git
+        url: git@github.com:geoffmore/go-elasticsearch.git
         basedir: ''
         wipe-workspace: 'True'
     triggers:
