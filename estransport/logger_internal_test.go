@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V. under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+
 // +build !integration
 
 package estransport
@@ -422,6 +426,21 @@ func TestTransportLogger(t *testing.T) {
 		}
 		if err.Error() != "MOCK ERROR" {
 			t.Errorf("Unexpected error value, expected [ERROR MOCK], got [%s]", err.Error())
+		}
+	})
+}
+
+func TestDebuggingLogger(t *testing.T) {
+	logger := &debuggingLogger{Output: ioutil.Discard}
+
+	t.Run("Log", func(t *testing.T) {
+		if err := logger.Log("Foo"); err != nil {
+			t.Errorf("Unexpected error: %s", err)
+		}
+	})
+	t.Run("Logf", func(t *testing.T) {
+		if err := logger.Logf("Foo %d", 1); err != nil {
+			t.Errorf("Unexpected error: %s", err)
 		}
 	})
 }

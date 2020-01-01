@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -9,8 +13,8 @@ import (
 )
 
 func newILMRetryFunc(t Transport) ILMRetry {
-	return func(o ...func(*ILMRetryRequest)) (*Response, error) {
-		var r = ILMRetryRequest{}
+	return func(index string, o ...func(*ILMRetryRequest)) (*Response, error) {
+		var r = ILMRetryRequest{Index: index}
 		for _, f := range o {
 			f(&r)
 		}
@@ -20,9 +24,11 @@ func newILMRetryFunc(t Transport) ILMRetry {
 
 // ----- API Definition -------------------------------------------------------
 
-// ILMRetry - https://www.elastic.co/guide/en/elasticsearch/reference/current/ilm-retry-policy.html
+// ILMRetry -
 //
-type ILMRetry func(o ...func(*ILMRetryRequest)) (*Response, error)
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/current/ilm-retry-policy.html.
+//
+type ILMRetry func(index string, o ...func(*ILMRetryRequest)) (*Response, error)
 
 // ILMRetryRequest configures the ILM Retry API request.
 //
@@ -51,10 +57,8 @@ func (r ILMRetryRequest) Do(ctx context.Context, transport Transport) (*Response
 	method = "POST"
 
 	path.Grow(1 + len(r.Index) + 1 + len("_ilm") + 1 + len("retry"))
-	if r.Index != "" {
-		path.WriteString("/")
-		path.WriteString(r.Index)
-	}
+	path.WriteString("/")
+	path.WriteString(r.Index)
 	path.WriteString("/")
 	path.WriteString("_ilm")
 	path.WriteString("/")
@@ -78,7 +82,10 @@ func (r ILMRetryRequest) Do(ctx context.Context, transport Transport) (*Response
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -126,14 +133,6 @@ func (f ILMRetry) WithContext(v context.Context) func(*ILMRetryRequest) {
 	}
 }
 
-// WithIndex - the name of the indices (comma-separated) whose failed lifecycle step is to be retry.
-//
-func (f ILMRetry) WithIndex(v string) func(*ILMRetryRequest) {
-	return func(r *ILMRetryRequest) {
-		r.Index = v
-	}
-}
-
 // WithPretty makes the response body pretty-printed.
 //
 func (f ILMRetry) WithPretty() func(*ILMRetryRequest) {
@@ -176,5 +175,16 @@ func (f ILMRetry) WithHeader(h map[string]string) func(*ILMRetryRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f ILMRetry) WithOpaqueID(s string) func(*ILMRetryRequest) {
+	return func(r *ILMRetryRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

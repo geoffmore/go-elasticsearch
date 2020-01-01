@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -32,9 +36,8 @@ type Index func(index string, body io.Reader, o ...func(*IndexRequest)) (*Respon
 // IndexRequest configures the Index API request.
 //
 type IndexRequest struct {
-	Index        string
-	DocumentType string
-	DocumentID   string
+	Index      string
+	DocumentID string
 
 	Body io.Reader
 
@@ -74,15 +77,11 @@ func (r IndexRequest) Do(ctx context.Context, transport Transport) (*Response, e
 		method = "POST"
 	}
 
-	if r.DocumentType == "" {
-		r.DocumentType = "_doc"
-	}
-
-	path.Grow(1 + len(r.Index) + 1 + len(r.DocumentType) + 1 + len(r.DocumentID))
+	path.Grow(1 + len(r.Index) + 1 + len("_doc") + 1 + len(r.DocumentID))
 	path.WriteString("/")
 	path.WriteString(r.Index)
 	path.WriteString("/")
-	path.WriteString(r.DocumentType)
+	path.WriteString("_doc")
 	if r.DocumentID != "" {
 		path.WriteString("/")
 		path.WriteString(r.DocumentID)
@@ -146,7 +145,10 @@ func (r IndexRequest) Do(ctx context.Context, transport Transport) (*Response, e
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), r.Body)
+	req, err := newRequest(method, path.String(), r.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -206,14 +208,6 @@ func (f Index) WithDocumentID(v string) func(*IndexRequest) {
 	}
 }
 
-// WithDocumentType - the type of the document.
-//
-func (f Index) WithDocumentType(v string) func(*IndexRequest) {
-	return func(r *IndexRequest) {
-		r.DocumentType = v
-	}
-}
-
 // WithIfPrimaryTerm - only perform the index operation if the last operation that has changed the document has the specified primary term.
 //
 func (f Index) WithIfPrimaryTerm(v int) func(*IndexRequest) {
@@ -230,7 +224,7 @@ func (f Index) WithIfSeqNo(v int) func(*IndexRequest) {
 	}
 }
 
-// WithOpType - explicit operation type.
+// WithOpType - explicit operation type. defaults to `index` for requests with an explicit document ID, and to `create`for requests without an explicit document ID.
 //
 func (f Index) WithOpType(v string) func(*IndexRequest) {
 	return func(r *IndexRequest) {
@@ -336,5 +330,16 @@ func (f Index) WithHeader(h map[string]string) func(*IndexRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f Index) WithOpaqueID(s string) func(*IndexRequest) {
+	return func(r *IndexRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

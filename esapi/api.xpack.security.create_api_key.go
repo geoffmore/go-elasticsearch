@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -21,7 +25,9 @@ func newSecurityCreateAPIKeyFunc(t Transport) SecurityCreateAPIKey {
 
 // ----- API Definition -------------------------------------------------------
 
-// SecurityCreateAPIKey - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
+// SecurityCreateAPIKey -
+//
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html.
 //
 type SecurityCreateAPIKey func(body io.Reader, o ...func(*SecurityCreateAPIKeyRequest)) (*Response, error)
 
@@ -78,7 +84,10 @@ func (r SecurityCreateAPIKeyRequest) Do(ctx context.Context, transport Transport
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), r.Body)
+	req, err := newRequest(method, path.String(), r.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -180,5 +189,16 @@ func (f SecurityCreateAPIKey) WithHeader(h map[string]string) func(*SecurityCrea
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f SecurityCreateAPIKey) WithOpaqueID(s string) func(*SecurityCreateAPIKeyRequest) {
+	return func(r *SecurityCreateAPIKeyRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

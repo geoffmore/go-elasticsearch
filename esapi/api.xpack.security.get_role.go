@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -20,7 +24,9 @@ func newSecurityGetRoleFunc(t Transport) SecurityGetRole {
 
 // ----- API Definition -------------------------------------------------------
 
-// SecurityGetRole - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-get-role.html
+// SecurityGetRole -
+//
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-get-role.html.
 //
 type SecurityGetRole func(o ...func(*SecurityGetRoleRequest)) (*Response, error)
 
@@ -78,7 +84,10 @@ func (r SecurityGetRoleRequest) Do(ctx context.Context, transport Transport) (*R
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -176,5 +185,16 @@ func (f SecurityGetRole) WithHeader(h map[string]string) func(*SecurityGetRoleRe
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f SecurityGetRole) WithOpaqueID(s string) func(*SecurityGetRoleRequest) {
+	return func(r *SecurityGetRoleRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

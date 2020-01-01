@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -31,9 +35,8 @@ type Explain func(index string, id string, o ...func(*ExplainRequest)) (*Respons
 // ExplainRequest configures the Explain API request.
 //
 type ExplainRequest struct {
-	Index        string
-	DocumentType string
-	DocumentID   string
+	Index      string
+	DocumentID string
 
 	Body io.Reader
 
@@ -71,21 +74,13 @@ func (r ExplainRequest) Do(ctx context.Context, transport Transport) (*Response,
 
 	method = "GET"
 
-	if r.DocumentType == "" {
-		r.DocumentType = "_doc"
-	}
-
-	path.Grow(1 + len(r.Index) + 1 + len(r.DocumentType) + 1 + len(r.DocumentID) + 1 + len("_explain"))
+	path.Grow(1 + len(r.Index) + 1 + len("_explain") + 1 + len(r.DocumentID))
 	path.WriteString("/")
 	path.WriteString(r.Index)
-	if r.DocumentType != "" {
-		path.WriteString("/")
-		path.WriteString(r.DocumentType)
-	}
-	path.WriteString("/")
-	path.WriteString(r.DocumentID)
 	path.WriteString("/")
 	path.WriteString("_explain")
+	path.WriteString("/")
+	path.WriteString(r.DocumentID)
 
 	params = make(map[string]string)
 
@@ -153,7 +148,10 @@ func (r ExplainRequest) Do(ctx context.Context, transport Transport) (*Response,
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), r.Body)
+	req, err := newRequest(method, path.String(), r.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -210,14 +208,6 @@ func (f Explain) WithContext(v context.Context) func(*ExplainRequest) {
 func (f Explain) WithBody(v io.Reader) func(*ExplainRequest) {
 	return func(r *ExplainRequest) {
 		r.Body = v
-	}
-}
-
-// WithDocumentType - the type of the document.
-//
-func (f Explain) WithDocumentType(v string) func(*ExplainRequest) {
-	return func(r *ExplainRequest) {
-		r.DocumentType = v
 	}
 }
 
@@ -359,5 +349,16 @@ func (f Explain) WithHeader(h map[string]string) func(*ExplainRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f Explain) WithOpaqueID(s string) func(*ExplainRequest) {
+	return func(r *ExplainRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -7,7 +11,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func newCatAliasesFunc(t Transport) CatAliases {
@@ -33,13 +36,12 @@ type CatAliases func(o ...func(*CatAliasesRequest)) (*Response, error)
 type CatAliasesRequest struct {
 	Name []string
 
-	Format        string
-	H             []string
-	Help          *bool
-	Local         *bool
-	MasterTimeout time.Duration
-	S             []string
-	V             *bool
+	Format string
+	H      []string
+	Help   *bool
+	Local  *bool
+	S      []string
+	V      *bool
 
 	Pretty     bool
 	Human      bool
@@ -90,10 +92,6 @@ func (r CatAliasesRequest) Do(ctx context.Context, transport Transport) (*Respon
 		params["local"] = strconv.FormatBool(*r.Local)
 	}
 
-	if r.MasterTimeout != 0 {
-		params["master_timeout"] = formatDuration(r.MasterTimeout)
-	}
-
 	if len(r.S) > 0 {
 		params["s"] = strings.Join(r.S, ",")
 	}
@@ -118,7 +116,10 @@ func (r CatAliasesRequest) Do(ctx context.Context, transport Transport) (*Respon
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -206,14 +207,6 @@ func (f CatAliases) WithLocal(v bool) func(*CatAliasesRequest) {
 	}
 }
 
-// WithMasterTimeout - explicit operation timeout for connection to master node.
-//
-func (f CatAliases) WithMasterTimeout(v time.Duration) func(*CatAliasesRequest) {
-	return func(r *CatAliasesRequest) {
-		r.MasterTimeout = v
-	}
-}
-
 // WithS - comma-separated list of column names or column aliases to sort by.
 //
 func (f CatAliases) WithS(v ...string) func(*CatAliasesRequest) {
@@ -272,5 +265,16 @@ func (f CatAliases) WithHeader(h map[string]string) func(*CatAliasesRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f CatAliases) WithOpaqueID(s string) func(*CatAliasesRequest) {
+	return func(r *CatAliasesRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

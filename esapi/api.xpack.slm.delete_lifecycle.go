@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -9,8 +13,8 @@ import (
 )
 
 func newSlmDeleteLifecycleFunc(t Transport) SlmDeleteLifecycle {
-	return func(o ...func(*SlmDeleteLifecycleRequest)) (*Response, error) {
-		var r = SlmDeleteLifecycleRequest{}
+	return func(policy_id string, o ...func(*SlmDeleteLifecycleRequest)) (*Response, error) {
+		var r = SlmDeleteLifecycleRequest{PolicyID: policy_id}
 		for _, f := range o {
 			f(&r)
 		}
@@ -20,14 +24,16 @@ func newSlmDeleteLifecycleFunc(t Transport) SlmDeleteLifecycle {
 
 // ----- API Definition -------------------------------------------------------
 
-// SlmDeleteLifecycle - https://www.elastic.co/guide/en/elasticsearch/reference/current/slm-api.html
+// SlmDeleteLifecycle -
 //
-type SlmDeleteLifecycle func(o ...func(*SlmDeleteLifecycleRequest)) (*Response, error)
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/current/slm-api-delete.html.
+//
+type SlmDeleteLifecycle func(policy_id string, o ...func(*SlmDeleteLifecycleRequest)) (*Response, error)
 
 // SlmDeleteLifecycleRequest configures the Slm Delete Lifecycle API request.
 //
 type SlmDeleteLifecycleRequest struct {
-	Policy string
+	PolicyID string
 
 	Pretty     bool
 	Human      bool
@@ -50,13 +56,13 @@ func (r SlmDeleteLifecycleRequest) Do(ctx context.Context, transport Transport) 
 
 	method = "DELETE"
 
-	path.Grow(1 + len("_slm") + 1 + len("policy") + 1 + len("{policy_id}"))
+	path.Grow(1 + len("_slm") + 1 + len("policy") + 1 + len(r.PolicyID))
 	path.WriteString("/")
 	path.WriteString("_slm")
 	path.WriteString("/")
 	path.WriteString("policy")
 	path.WriteString("/")
-	path.WriteString("{policy_id}")
+	path.WriteString(r.PolicyID)
 
 	params = make(map[string]string)
 
@@ -76,7 +82,10 @@ func (r SlmDeleteLifecycleRequest) Do(ctx context.Context, transport Transport) 
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -124,14 +133,6 @@ func (f SlmDeleteLifecycle) WithContext(v context.Context) func(*SlmDeleteLifecy
 	}
 }
 
-// WithPolicy - the ID of the snapshot lifecycle policy to remove.
-//
-func (f SlmDeleteLifecycle) WithPolicy(v string) func(*SlmDeleteLifecycleRequest) {
-	return func(r *SlmDeleteLifecycleRequest) {
-		r.Policy = v
-	}
-}
-
 // WithPretty makes the response body pretty-printed.
 //
 func (f SlmDeleteLifecycle) WithPretty() func(*SlmDeleteLifecycleRequest) {
@@ -174,5 +175,16 @@ func (f SlmDeleteLifecycle) WithHeader(h map[string]string) func(*SlmDeleteLifec
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f SlmDeleteLifecycle) WithOpaqueID(s string) func(*SlmDeleteLifecycleRequest) {
+	return func(r *SlmDeleteLifecycleRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

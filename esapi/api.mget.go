@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -31,8 +35,7 @@ type Mget func(body io.Reader, o ...func(*MgetRequest)) (*Response, error)
 // MgetRequest configures the Mget API request.
 //
 type MgetRequest struct {
-	Index        string
-	DocumentType string
+	Index string
 
 	Body io.Reader
 
@@ -66,14 +69,10 @@ func (r MgetRequest) Do(ctx context.Context, transport Transport) (*Response, er
 
 	method = "GET"
 
-	path.Grow(1 + len(r.Index) + 1 + len(r.DocumentType) + 1 + len("_mget"))
+	path.Grow(1 + len(r.Index) + 1 + len("_mget"))
 	if r.Index != "" {
 		path.WriteString("/")
 		path.WriteString(r.Index)
-	}
-	if r.DocumentType != "" {
-		path.WriteString("/")
-		path.WriteString(r.DocumentType)
 	}
 	path.WriteString("/")
 	path.WriteString("_mget")
@@ -128,7 +127,10 @@ func (r MgetRequest) Do(ctx context.Context, transport Transport) (*Response, er
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), r.Body)
+	req, err := newRequest(method, path.String(), r.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -185,14 +187,6 @@ func (f Mget) WithContext(v context.Context) func(*MgetRequest) {
 func (f Mget) WithIndex(v string) func(*MgetRequest) {
 	return func(r *MgetRequest) {
 		r.Index = v
-	}
-}
-
-// WithDocumentType - the type of the document.
-//
-func (f Mget) WithDocumentType(v string) func(*MgetRequest) {
-	return func(r *MgetRequest) {
-		r.DocumentType = v
 	}
 }
 
@@ -302,5 +296,16 @@ func (f Mget) WithHeader(h map[string]string) func(*MgetRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f Mget) WithOpaqueID(s string) func(*MgetRequest) {
+	return func(r *MgetRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

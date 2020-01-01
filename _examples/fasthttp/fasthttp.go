@@ -1,10 +1,13 @@
+// Licensed to Elasticsearch B.V. under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+
 package fasthttp
 
 import (
-	"bytes"
-	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/valyala/fasthttp"
 )
@@ -18,8 +21,13 @@ type Transport struct{}
 //
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	freq := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(freq)
+
 	fres := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(fres)
+
 	t.copyRequest(freq, req)
+
 	err := fasthttp.Do(freq, fres)
 	if err != nil {
 		return nil, err
@@ -31,10 +39,12 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-// copyRequest converts http.Request to fasthttp.Request
+// copyRequest converts a http.Request to fasthttp.Request
 //
 func (t *Transport) copyRequest(dst *fasthttp.Request, src *http.Request) *fasthttp.Request {
-	dst.Reset()
+	if src.Method == "GET" && src.Body != nil {
+		src.Method = "POST"
+	}
 
 	dst.SetHost(src.Host)
 	dst.SetRequestURI(src.URL.String())
@@ -49,16 +59,13 @@ func (t *Transport) copyRequest(dst *fasthttp.Request, src *http.Request) *fasth
 	}
 
 	if src.Body != nil {
-		var b bytes.Buffer
-		io.Copy(&b, src.Body)
-
-		dst.SetBody(b.Bytes())
+		dst.SetBodyStream(src.Body, -1)
 	}
 
 	return dst
 }
 
-// copyResponse converts http.Response to fasthttp.Response
+// copyResponse converts a http.Response to fasthttp.Response
 //
 func (t *Transport) copyResponse(dst *http.Response, src *fasthttp.Response) *http.Response {
 	dst.StatusCode = src.StatusCode()
@@ -67,9 +74,9 @@ func (t *Transport) copyResponse(dst *http.Response, src *fasthttp.Response) *ht
 		dst.Header.Set(string(k), string(v))
 	})
 
-	if src.Body != nil {
-		dst.Body = ioutil.NopCloser(bytes.NewReader(src.Body()))
-	}
+	// Cast to a string to make a copy seeing as src.Body() won't
+	// be valid after the response is released back to the pool (fasthttp.ReleaseResponse).
+	dst.Body = ioutil.NopCloser(strings.NewReader(string(src.Body())))
 
 	return dst
 }

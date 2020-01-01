@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V. under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+
 package gentests
 
 import (
@@ -82,6 +86,17 @@ search.aggregation/40_range.yml:
 tasks.list/10_basic.yml:
   - tasks_list headers
 
+# Node Selector feature not implemented
+cat.aliases/10_basic.yml:
+  - "Help (pre 7.4.0)"
+  - "Simple alias (pre 7.4.0)"
+  - "Complex alias (pre 7.4.0)"
+  - "Column headers (pre 7.4.0)"
+  - "Alias against closed index (pre 7.4.0)"
+
+indices.put_mapping/10_basic.yml:
+  - "Put mappings with explicit _doc type bwc"
+
 # Not relevant
 search/issue4895.yml:
 search/issue9606.yml:
@@ -95,6 +110,10 @@ bulk/81_cas_with_types.yml:
 # Stash in body
 api_key/10_basic.yml:
   - Test invalidate api key
+api_key/11_invalidation.yml:
+  - Test invalidate api key by username
+rollup/put_job.yml:
+  - Test put job with templates
 
 # Changing password locks out tests
 change_password/10_basic.yml:
@@ -103,12 +122,21 @@ change_password/10_basic.yml:
 # Missing refreshes in the test
 data_frame/transforms_start_stop.yml:
 ml/index_layout.yml:
+transform/transforms_start_stop.yml:
+  - Verify start transform reuses destination index
+transform/transforms_start_stop.yml:
+  - Test get multiple transform stats
+transform/transforms_stats.yml:
+  - Test get multiple transform stats
+  - Test get multiple transform stats where one does not have a task
 
 # More QA tests than API tests
 data_frame/transforms_stats.yml:
   - Test get multiple transform stats
   - Test get transform stats on missing transform
   - Test get multiple transform stats where one does not have a task
+ml/jobs_crud.yml:
+  - Test reopen job resets the finished time
 
 # Invalid license makes subsequent tests fail
 license/20_put_license.yml:
@@ -116,13 +144,24 @@ license/20_put_license.yml:
 # Test tries to match on map from body, but Go keys are not sorted
 ml/jobs_crud.yml:
   - Test job with rules
+  - Test put job with model_memory_limit as number
+  - Test put job with model_memory_limit as string and lazy open
 
 # Test gets stuck every time
 ml/jobs_get_stats.yml:
 
-# # status_exception, Cannot process data because job [post-data-job] does not have a corresponding autodetect process
-# # resource_already_exists_exception, task with id {job-post-data-job} already exist
-# ml/post_data.yml:
+# status_exception, Cannot process data because job [post-data-job] does not have a corresponding autodetect process
+# resource_already_exists_exception, task with id {job-post-data-job} already exist
+# status_exception, Cannot open job [start-stop-datafeed-job-foo-1] because it has already been opened
+ml/post_data.yml:
+  - Test flush with skip_time
+  - Test POST data job api, flush, close and verify DataCounts doc
+  - Test flush and close job WITHOUT sending any data
+ml/start_stop_datafeed.yml:
+  - Test stop given expression
+transform/transforms_start_stop.yml:
+  - Test start transform
+  - Verify start transform reuses destination index
 
 # Possible bad test setup, Cannot open job [start-stop-datafeed-job] because it has already been opened
 # resource_already_exists_exception, task with id {job-start-stop-datafeed-job-foo-2} already exist
@@ -138,6 +177,11 @@ monitoring/bulk/20_privileges.yml:
 
 # Test tries to match on whole body, but map keys are unstable in Go
 rollup/security_tests.yml:
+
+# Test tries to match on map key, but map keys are unstable in Go
+ml/data_frame_analytics_crud.yml:
+  - Test put with description
+  - Test put valid config with custom outlier detection
 
 # TEMPORARY: Missing 'body: { indices: "test_index" }' payload, TODO: PR
 snapshot/10_basic.yml:
@@ -173,4 +217,10 @@ watcher/execute_watch/60_http_input.yml:
 # Test tries to match on "tagline", which requires "human=false", which doesn't work in the Go API.
 # Also test does too much within a single test, so has to be disabled as whole, unfortunately.
 xpack/15_basic.yml:
+
+# Test uses "y" as a property name, which is parsed as 'true' in the Go YAML library;
+# see https://yaml.org/type/bool.html
+ml/explain_data_frame_analytics.yml:
+  - Test empty data frame given body
+  - Test non-empty data frame given body
 `

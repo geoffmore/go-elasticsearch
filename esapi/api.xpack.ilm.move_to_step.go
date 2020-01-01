@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -10,8 +14,8 @@ import (
 )
 
 func newILMMoveToStepFunc(t Transport) ILMMoveToStep {
-	return func(o ...func(*ILMMoveToStepRequest)) (*Response, error) {
-		var r = ILMMoveToStepRequest{}
+	return func(index string, o ...func(*ILMMoveToStepRequest)) (*Response, error) {
+		var r = ILMMoveToStepRequest{Index: index}
 		for _, f := range o {
 			f(&r)
 		}
@@ -21,9 +25,11 @@ func newILMMoveToStepFunc(t Transport) ILMMoveToStep {
 
 // ----- API Definition -------------------------------------------------------
 
-// ILMMoveToStep - https://www.elastic.co/guide/en/elasticsearch/reference/current/ilm-move-to-step.html
+// ILMMoveToStep -
 //
-type ILMMoveToStep func(o ...func(*ILMMoveToStepRequest)) (*Response, error)
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/current/ilm-move-to-step.html.
+//
+type ILMMoveToStep func(index string, o ...func(*ILMMoveToStepRequest)) (*Response, error)
 
 // ILMMoveToStepRequest configures the ILM Move To Step API request.
 //
@@ -58,10 +64,8 @@ func (r ILMMoveToStepRequest) Do(ctx context.Context, transport Transport) (*Res
 	path.WriteString("_ilm")
 	path.WriteString("/")
 	path.WriteString("move")
-	if r.Index != "" {
-		path.WriteString("/")
-		path.WriteString(r.Index)
-	}
+	path.WriteString("/")
+	path.WriteString(r.Index)
 
 	params = make(map[string]string)
 
@@ -81,7 +85,10 @@ func (r ILMMoveToStepRequest) Do(ctx context.Context, transport Transport) (*Res
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), r.Body)
+	req, err := newRequest(method, path.String(), r.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -141,14 +148,6 @@ func (f ILMMoveToStep) WithBody(v io.Reader) func(*ILMMoveToStepRequest) {
 	}
 }
 
-// WithIndex - the name of the index whose lifecycle step is to change.
-//
-func (f ILMMoveToStep) WithIndex(v string) func(*ILMMoveToStepRequest) {
-	return func(r *ILMMoveToStepRequest) {
-		r.Index = v
-	}
-}
-
 // WithPretty makes the response body pretty-printed.
 //
 func (f ILMMoveToStep) WithPretty() func(*ILMMoveToStepRequest) {
@@ -191,5 +190,16 @@ func (f ILMMoveToStep) WithHeader(h map[string]string) func(*ILMMoveToStepReques
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f ILMMoveToStep) WithOpaqueID(s string) func(*ILMMoveToStepRequest) {
+	return func(r *ILMMoveToStepRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

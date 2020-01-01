@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -7,7 +11,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func newCatFielddataFunc(t Transport) CatFielddata {
@@ -33,14 +36,12 @@ type CatFielddata func(o ...func(*CatFielddataRequest)) (*Response, error)
 type CatFielddataRequest struct {
 	Fields []string
 
-	Bytes         string
-	Format        string
-	H             []string
-	Help          *bool
-	Local         *bool
-	MasterTimeout time.Duration
-	S             []string
-	V             *bool
+	Bytes  string
+	Format string
+	H      []string
+	Help   *bool
+	S      []string
+	V      *bool
 
 	Pretty     bool
 	Human      bool
@@ -95,14 +96,6 @@ func (r CatFielddataRequest) Do(ctx context.Context, transport Transport) (*Resp
 		params["help"] = strconv.FormatBool(*r.Help)
 	}
 
-	if r.Local != nil {
-		params["local"] = strconv.FormatBool(*r.Local)
-	}
-
-	if r.MasterTimeout != 0 {
-		params["master_timeout"] = formatDuration(r.MasterTimeout)
-	}
-
 	if len(r.S) > 0 {
 		params["s"] = strings.Join(r.S, ",")
 	}
@@ -127,7 +120,10 @@ func (r CatFielddataRequest) Do(ctx context.Context, transport Transport) (*Resp
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -215,22 +211,6 @@ func (f CatFielddata) WithHelp(v bool) func(*CatFielddataRequest) {
 	}
 }
 
-// WithLocal - return local information, do not retrieve the state from master node (default: false).
-//
-func (f CatFielddata) WithLocal(v bool) func(*CatFielddataRequest) {
-	return func(r *CatFielddataRequest) {
-		r.Local = &v
-	}
-}
-
-// WithMasterTimeout - explicit operation timeout for connection to master node.
-//
-func (f CatFielddata) WithMasterTimeout(v time.Duration) func(*CatFielddataRequest) {
-	return func(r *CatFielddataRequest) {
-		r.MasterTimeout = v
-	}
-}
-
 // WithS - comma-separated list of column names or column aliases to sort by.
 //
 func (f CatFielddata) WithS(v ...string) func(*CatFielddataRequest) {
@@ -289,5 +269,16 @@ func (f CatFielddata) WithHeader(h map[string]string) func(*CatFielddataRequest)
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f CatFielddata) WithOpaqueID(s string) func(*CatFielddataRequest) {
+	return func(r *CatFielddataRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

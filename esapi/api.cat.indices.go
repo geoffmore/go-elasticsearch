@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -43,6 +47,7 @@ type CatIndicesRequest struct {
 	MasterTimeout           time.Duration
 	Pri                     *bool
 	S                       []string
+	Time                    string
 	V                       *bool
 
 	Pretty     bool
@@ -118,6 +123,10 @@ func (r CatIndicesRequest) Do(ctx context.Context, transport Transport) (*Respon
 		params["s"] = strings.Join(r.S, ",")
 	}
 
+	if r.Time != "" {
+		params["time"] = r.Time
+	}
+
 	if r.V != nil {
 		params["v"] = strconv.FormatBool(*r.V)
 	}
@@ -138,7 +147,10 @@ func (r CatIndicesRequest) Do(ctx context.Context, transport Transport) (*Respon
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -274,6 +286,14 @@ func (f CatIndices) WithS(v ...string) func(*CatIndicesRequest) {
 	}
 }
 
+// WithTime - the unit in which to display time values.
+//
+func (f CatIndices) WithTime(v string) func(*CatIndicesRequest) {
+	return func(r *CatIndicesRequest) {
+		r.Time = v
+	}
+}
+
 // WithV - verbose mode. display column headers.
 //
 func (f CatIndices) WithV(v bool) func(*CatIndicesRequest) {
@@ -324,5 +344,16 @@ func (f CatIndices) WithHeader(h map[string]string) func(*CatIndicesRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f CatIndices) WithOpaqueID(s string) func(*CatIndicesRequest) {
+	return func(r *CatIndicesRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

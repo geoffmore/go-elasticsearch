@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -31,9 +35,8 @@ type Delete func(index string, id string, o ...func(*DeleteRequest)) (*Response,
 // DeleteRequest configures the Delete API request.
 //
 type DeleteRequest struct {
-	Index        string
-	DocumentType string
-	DocumentID   string
+	Index      string
+	DocumentID string
 
 	IfPrimaryTerm       *int
 	IfSeqNo             *int
@@ -65,17 +68,11 @@ func (r DeleteRequest) Do(ctx context.Context, transport Transport) (*Response, 
 
 	method = "DELETE"
 
-	if r.DocumentType == "" {
-		r.DocumentType = "_doc"
-	}
-
-	path.Grow(1 + len(r.Index) + 1 + len(r.DocumentType) + 1 + len(r.DocumentID))
+	path.Grow(1 + len(r.Index) + 1 + len("_doc") + 1 + len(r.DocumentID))
 	path.WriteString("/")
 	path.WriteString(r.Index)
-	if r.DocumentType != "" {
-		path.WriteString("/")
-		path.WriteString(r.DocumentType)
-	}
+	path.WriteString("/")
+	path.WriteString("_doc")
 	path.WriteString("/")
 	path.WriteString(r.DocumentID)
 
@@ -129,7 +126,10 @@ func (r DeleteRequest) Do(ctx context.Context, transport Transport) (*Response, 
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -174,14 +174,6 @@ func (r DeleteRequest) Do(ctx context.Context, transport Transport) (*Response, 
 func (f Delete) WithContext(v context.Context) func(*DeleteRequest) {
 	return func(r *DeleteRequest) {
 		r.ctx = v
-	}
-}
-
-// WithDocumentType - the type of the document.
-//
-func (f Delete) WithDocumentType(v string) func(*DeleteRequest) {
-	return func(r *DeleteRequest) {
-		r.DocumentType = v
 	}
 }
 
@@ -291,5 +283,16 @@ func (f Delete) WithHeader(h map[string]string) func(*DeleteRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f Delete) WithOpaqueID(s string) func(*DeleteRequest) {
+	return func(r *DeleteRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

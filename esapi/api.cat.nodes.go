@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -31,6 +35,7 @@ type CatNodes func(o ...func(*CatNodesRequest)) (*Response, error)
 // CatNodesRequest configures the Cat Nodes API request.
 //
 type CatNodesRequest struct {
+	Bytes         string
 	Format        string
 	FullID        *bool
 	H             []string
@@ -38,6 +43,7 @@ type CatNodesRequest struct {
 	Local         *bool
 	MasterTimeout time.Duration
 	S             []string
+	Time          string
 	V             *bool
 
 	Pretty     bool
@@ -65,6 +71,10 @@ func (r CatNodesRequest) Do(ctx context.Context, transport Transport) (*Response
 	path.WriteString("/_cat/nodes")
 
 	params = make(map[string]string)
+
+	if r.Bytes != "" {
+		params["bytes"] = r.Bytes
+	}
 
 	if r.Format != "" {
 		params["format"] = r.Format
@@ -94,6 +104,10 @@ func (r CatNodesRequest) Do(ctx context.Context, transport Transport) (*Response
 		params["s"] = strings.Join(r.S, ",")
 	}
 
+	if r.Time != "" {
+		params["time"] = r.Time
+	}
+
 	if r.V != nil {
 		params["v"] = strconv.FormatBool(*r.V)
 	}
@@ -114,7 +128,10 @@ func (r CatNodesRequest) Do(ctx context.Context, transport Transport) (*Response
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -159,6 +176,14 @@ func (r CatNodesRequest) Do(ctx context.Context, transport Transport) (*Response
 func (f CatNodes) WithContext(v context.Context) func(*CatNodesRequest) {
 	return func(r *CatNodesRequest) {
 		r.ctx = v
+	}
+}
+
+// WithBytes - the unit in which to display byte values.
+//
+func (f CatNodes) WithBytes(v string) func(*CatNodesRequest) {
+	return func(r *CatNodesRequest) {
+		r.Bytes = v
 	}
 }
 
@@ -218,6 +243,14 @@ func (f CatNodes) WithS(v ...string) func(*CatNodesRequest) {
 	}
 }
 
+// WithTime - the unit in which to display time values.
+//
+func (f CatNodes) WithTime(v string) func(*CatNodesRequest) {
+	return func(r *CatNodesRequest) {
+		r.Time = v
+	}
+}
+
 // WithV - verbose mode. display column headers.
 //
 func (f CatNodes) WithV(v bool) func(*CatNodesRequest) {
@@ -268,5 +301,16 @@ func (f CatNodes) WithHeader(h map[string]string) func(*CatNodesRequest) {
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f CatNodes) WithOpaqueID(s string) func(*CatNodesRequest) {
+	return func(r *CatNodesRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

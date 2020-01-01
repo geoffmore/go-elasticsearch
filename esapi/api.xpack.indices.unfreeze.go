@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -22,7 +26,9 @@ func newIndicesUnfreezeFunc(t Transport) IndicesUnfreeze {
 
 // ----- API Definition -------------------------------------------------------
 
-// IndicesUnfreeze - https://www.elastic.co/guide/en/elasticsearch/reference/current/frozen.html
+// IndicesUnfreeze -
+//
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/current/frozen.html.
 //
 type IndicesUnfreeze func(index string, o ...func(*IndicesUnfreezeRequest)) (*Response, error)
 
@@ -107,7 +113,10 @@ func (r IndicesUnfreezeRequest) Do(ctx context.Context, transport Transport) (*R
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -245,5 +254,16 @@ func (f IndicesUnfreeze) WithHeader(h map[string]string) func(*IndicesUnfreezeRe
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f IndicesUnfreeze) WithOpaqueID(s string) func(*IndicesUnfreezeRequest) {
+	return func(r *IndicesUnfreezeRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

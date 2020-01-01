@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V. under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+
 // +build !integration
 
 package elasticsearch
@@ -18,14 +22,20 @@ func TestClientConfiguration(t *testing.T) {
 	t.Parallel()
 
 	t.Run("With empty", func(t *testing.T) {
-		_, err := NewDefaultClient()
+		c, err := NewDefaultClient()
 
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
+
+		u := c.Transport.(*estransport.Client).URLs()[0].String()
+
+		if u != defaultURL {
+			t.Errorf("Unexpected URL, want=%s, got=%s", defaultURL, u)
+		}
 	})
 
-	t.Run("With address", func(t *testing.T) {
+	t.Run("With URL from Addresses", func(t *testing.T) {
 		c, err := NewClient(Config{Addresses: []string{"http://localhost:8080//"}})
 		if err != nil {
 			t.Fatalf("Unexpected error: %s", err)
@@ -58,13 +68,15 @@ func TestClientConfiguration(t *testing.T) {
 		os.Setenv("ELASTICSEARCH_URL", "http://example.com")
 		defer func() { os.Setenv("ELASTICSEARCH_URL", "") }()
 
-		_, err := NewClient(Config{Addresses: []string{"http://localhost:8080//"}})
-		if err == nil {
-			t.Fatalf("Expected error, got: %v", err)
+		c, err := NewClient(Config{Addresses: []string{"http://localhost:8080//"}})
+		if err != nil {
+			t.Fatalf("Unexpected error: %s", err)
 		}
-		match, _ := regexp.MatchString("both .* are set", err.Error())
-		if !match {
-			t.Errorf("Expected error when addresses from environment and configuration are used together, got: %v", err)
+
+		u := c.Transport.(*estransport.Client).URLs()[0].String()
+
+		if u != "http://localhost:8080" {
+			t.Errorf("Unexpected URL, want=http://localhost:8080, got=%s", u)
 		}
 	})
 
@@ -72,18 +84,20 @@ func TestClientConfiguration(t *testing.T) {
 		os.Setenv("ELASTICSEARCH_URL", "http://example.com")
 		defer func() { os.Setenv("ELASTICSEARCH_URL", "") }()
 
-		_, err := NewClient(Config{CloudID: "foobar="})
-		if err == nil {
-			t.Fatalf("Expected error, got: %v", err)
+		c, err := NewClient(Config{CloudID: "foo:YmFyLmNsb3VkLmVzLmlvJGFiYzEyMyRkZWY0NTY="})
+		if err != nil {
+			t.Fatalf("Unexpected error: %s", err)
 		}
-		match, _ := regexp.MatchString("both .* are set", err.Error())
-		if !match {
-			t.Errorf("Expected error when addresses from environment and configuration are used together, got: %v", err)
+
+		u := c.Transport.(*estransport.Client).URLs()[0].String()
+
+		if u != "https://abc123.bar.cloud.es.io" {
+			t.Errorf("Unexpected URL, want=https://abc123.bar.cloud.es.io, got=%s", u)
 		}
 	})
 
 	t.Run("With cfg.Addresses and cfg.CloudID", func(t *testing.T) {
-		_, err := NewClient(Config{Addresses: []string{"http://localhost:8080//"}, CloudID: "foobar="})
+		_, err := NewClient(Config{Addresses: []string{"http://localhost:8080//"}, CloudID: "foo:ABC="})
 		if err == nil {
 			t.Fatalf("Expected error, got: %v", err)
 		}
@@ -94,6 +108,7 @@ func TestClientConfiguration(t *testing.T) {
 	})
 
 	t.Run("With CloudID", func(t *testing.T) {
+		// bar.cloud.es.io$abc123$def456
 		c, err := NewClient(Config{CloudID: "foo:YmFyLmNsb3VkLmVzLmlvJGFiYzEyMyRkZWY0NTY="})
 		if err != nil {
 			t.Fatalf("Unexpected error: %s", err)
@@ -101,8 +116,27 @@ func TestClientConfiguration(t *testing.T) {
 
 		u := c.Transport.(*estransport.Client).URLs()[0].String()
 
-		if u != "https://abc123.bar.cloud.es.io:9243" {
-			t.Errorf("Unexpected URL, want=https://abc123.bar.cloud.es.io:9243, got=%s", u)
+		if u != "https://abc123.bar.cloud.es.io" {
+			t.Errorf("Unexpected URL, want=https://abc123.bar.cloud.es.io, got=%s", u)
+		}
+	})
+
+	t.Run("With invalid CloudID", func(t *testing.T) {
+		var err error
+
+		_, err = NewClient(Config{CloudID: "foo:ZZZ==="})
+		if err == nil {
+			t.Errorf("Expected error for CloudID, got: %v", err)
+		}
+
+		_, err = NewClient(Config{CloudID: "foo:Zm9v"})
+		if err == nil {
+			t.Errorf("Expected error for CloudID, got: %v", err)
+		}
+
+		_, err = NewClient(Config{CloudID: "foo:"})
+		if err == nil {
+			t.Errorf("Expected error for CloudID, got: %v", err)
 		}
 	})
 
@@ -233,16 +267,30 @@ func TestAddrsToURLs(t *testing.T) {
 
 func TestCloudID(t *testing.T) {
 	t.Run("Parse", func(t *testing.T) {
-		input := "name:" + base64.StdEncoding.EncodeToString([]byte("host$es$kibana"))
-		expected := "https://es.host:9243"
+		var testdata = []struct {
+			in  string
+			out string
+		}{
+			{
+				in:  "name:" + base64.StdEncoding.EncodeToString([]byte("host$es$kibana")),
+				out: "https://es.host",
+			},
+			{
+				in:  "name:" + base64.StdEncoding.EncodeToString([]byte("host:9243$es$kibana")),
+				out: "https://es.host:9243",
+			},
+		}
 
-		actual, err := addrFromCloudID(input)
-		if err != nil {
-			t.Errorf("Unexpected error: %s", err)
+		for _, tt := range testdata {
+			actual, err := addrFromCloudID(tt.in)
+			if err != nil {
+				t.Errorf("Unexpected error: %s", err)
+			}
+			if actual != tt.out {
+				t.Errorf("Unexpected output, want=%q, got=%q", tt.out, actual)
+			}
 		}
-		if actual != expected {
-			t.Errorf("Unexpected output, want=%q, got=%q", expected, actual)
-		}
+
 	})
 
 	t.Run("Invalid format", func(t *testing.T) {
@@ -273,5 +321,18 @@ func TestCloudID(t *testing.T) {
 func TestVersion(t *testing.T) {
 	if Version == "" {
 		t.Error("Version is empty")
+	}
+}
+
+func TestClientMetrics(t *testing.T) {
+	c, _ := NewClient(Config{EnableMetrics: true})
+
+	m, err := c.Metrics()
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if m.Requests != 0 {
+		t.Errorf("Unexpected output: %s", m)
 	}
 }

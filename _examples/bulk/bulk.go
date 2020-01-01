@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V. under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+
 // +build ignore
 
 // This example demonstrates indexing documents using the Elasticsearch "Bulk" API
@@ -232,6 +236,11 @@ func main() {
 					}
 				}
 			}
+
+			// Close the response body, to prevent reaching the limit for goroutines or file handles
+			//
+			res.Body.Close()
+
 			// Reset the buffer and items counter
 			//
 			buf.Reset()

@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+//
 // Code generated from specification version 8.0.0: DO NOT EDIT
 
 package esapi
@@ -30,8 +34,7 @@ type IndicesGetFieldMapping func(fields []string, o ...func(*IndicesGetFieldMapp
 // IndicesGetFieldMappingRequest configures the Indices Get Field Mapping API request.
 //
 type IndicesGetFieldMappingRequest struct {
-	Index        []string
-	DocumentType []string
+	Index []string
 
 	Fields []string
 
@@ -39,7 +42,6 @@ type IndicesGetFieldMappingRequest struct {
 	ExpandWildcards   string
 	IgnoreUnavailable *bool
 	IncludeDefaults   *bool
-	IncludeTypeName   *bool
 	Local             *bool
 
 	Pretty     bool
@@ -63,17 +65,13 @@ func (r IndicesGetFieldMappingRequest) Do(ctx context.Context, transport Transpo
 
 	method = "GET"
 
-	path.Grow(1 + len(strings.Join(r.Index, ",")) + 1 + len("_mapping") + 1 + len(strings.Join(r.DocumentType, ",")) + 1 + len("field") + 1 + len(strings.Join(r.Fields, ",")))
+	path.Grow(1 + len(strings.Join(r.Index, ",")) + 1 + len("_mapping") + 1 + len("field") + 1 + len(strings.Join(r.Fields, ",")))
 	if len(r.Index) > 0 {
 		path.WriteString("/")
 		path.WriteString(strings.Join(r.Index, ","))
 	}
 	path.WriteString("/")
 	path.WriteString("_mapping")
-	if len(r.DocumentType) > 0 {
-		path.WriteString("/")
-		path.WriteString(strings.Join(r.DocumentType, ","))
-	}
 	path.WriteString("/")
 	path.WriteString("field")
 	path.WriteString("/")
@@ -97,10 +95,6 @@ func (r IndicesGetFieldMappingRequest) Do(ctx context.Context, transport Transpo
 		params["include_defaults"] = strconv.FormatBool(*r.IncludeDefaults)
 	}
 
-	if r.IncludeTypeName != nil {
-		params["include_type_name"] = strconv.FormatBool(*r.IncludeTypeName)
-	}
-
 	if r.Local != nil {
 		params["local"] = strconv.FormatBool(*r.Local)
 	}
@@ -121,7 +115,10 @@ func (r IndicesGetFieldMappingRequest) Do(ctx context.Context, transport Transpo
 		params["filter_path"] = strings.Join(r.FilterPath, ",")
 	}
 
-	req, _ := newRequest(method, path.String(), nil)
+	req, err := newRequest(method, path.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(params) > 0 {
 		q := req.URL.Query()
@@ -177,14 +174,6 @@ func (f IndicesGetFieldMapping) WithIndex(v ...string) func(*IndicesGetFieldMapp
 	}
 }
 
-// WithDocumentType - a list of document types.
-//
-func (f IndicesGetFieldMapping) WithDocumentType(v ...string) func(*IndicesGetFieldMappingRequest) {
-	return func(r *IndicesGetFieldMappingRequest) {
-		r.DocumentType = v
-	}
-}
-
 // WithAllowNoIndices - whether to ignore if a wildcard indices expression resolves into no concrete indices. (this includes `_all` string or when no indices have been specified).
 //
 func (f IndicesGetFieldMapping) WithAllowNoIndices(v bool) func(*IndicesGetFieldMappingRequest) {
@@ -214,14 +203,6 @@ func (f IndicesGetFieldMapping) WithIgnoreUnavailable(v bool) func(*IndicesGetFi
 func (f IndicesGetFieldMapping) WithIncludeDefaults(v bool) func(*IndicesGetFieldMappingRequest) {
 	return func(r *IndicesGetFieldMappingRequest) {
 		r.IncludeDefaults = &v
-	}
-}
-
-// WithIncludeTypeName - whether a type should be returned in the body of the mappings..
-//
-func (f IndicesGetFieldMapping) WithIncludeTypeName(v bool) func(*IndicesGetFieldMappingRequest) {
-	return func(r *IndicesGetFieldMappingRequest) {
-		r.IncludeTypeName = &v
 	}
 }
 
@@ -275,5 +256,16 @@ func (f IndicesGetFieldMapping) WithHeader(h map[string]string) func(*IndicesGet
 		for k, v := range h {
 			r.Header.Add(k, v)
 		}
+	}
+}
+
+// WithOpaqueID adds the X-Opaque-Id header to the HTTP request.
+//
+func (f IndicesGetFieldMapping) WithOpaqueID(s string) func(*IndicesGetFieldMappingRequest) {
+	return func(r *IndicesGetFieldMappingRequest) {
+		if r.Header == nil {
+			r.Header = make(http.Header)
+		}
+		r.Header.Set("X-Opaque-Id", s)
 	}
 }

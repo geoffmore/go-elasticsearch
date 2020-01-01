@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V. under one or more agreements.
+// Elasticsearch B.V. licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information.
+
 package gentests
 
 import (
@@ -55,6 +59,7 @@ func (g *Generator) Output() (io.Reader, error) {
 		g.w("testSuiteSetup := func() {\n")
 		g.genSetupTeardown(g.TestSuite.Setup)
 		g.w("}\n")
+		g.w("_ = testSuiteSetup\n")
 		g.w("// --------------------------------------------------------------------------------\n")
 		g.w("\n")
 	}
@@ -68,30 +73,31 @@ func (g *Generator) Output() (io.Reader, error) {
 		g.w("\n")
 		g.genLocationYAML(t)
 		g.w("\t" + `t.Run("` + strings.Title(t.Name) + `", ` + "func(t *testing.T) {\n")
-		g.genSkip(t)
-		g.w("\tdefer recoverPanic(t)\n")
-		g.w("\tcommonSetup()\n")
-		if g.TestSuite.Type == "xpack" {
-			g.w("\txpackSetup()\n")
-		}
-		if len(g.TestSuite.Setup) > 0 {
-			g.w("\ttestSuiteSetup()\n")
-		}
-		g.w("\n")
-		if len(t.Setup) > 0 {
-			g.w("\t// Test setup\n")
-			g.genSetupTeardown(t.Setup)
-		}
-		if len(t.Teardown) > 0 {
-			g.w("\t// Test teardown\n")
-			g.w("\tdefer func(t) {\n")
-			g.genSetupTeardown(t.Teardown)
-			g.w("\t}(t *testing.T)\n")
-		}
-		if len(t.Setup) > 0 || len(t.Teardown) > 0 {
+		if !g.genSkip(t) {
+			g.w("\tdefer recoverPanic(t)\n")
+			g.w("\tcommonSetup()\n")
+			if g.TestSuite.Type == "xpack" {
+				g.w("\txpackSetup()\n")
+			}
+			if len(g.TestSuite.Setup) > 0 {
+				g.w("\ttestSuiteSetup()\n")
+			}
 			g.w("\n")
+			if len(t.Setup) > 0 {
+				g.w("\t// Test setup\n")
+				g.genSetupTeardown(t.Setup)
+			}
+			if len(t.Teardown) > 0 {
+				g.w("\t// Test teardown\n")
+				g.w("\tdefer func(t) {\n")
+				g.genSetupTeardown(t.Teardown)
+				g.w("\t}(t *testing.T)\n")
+			}
+			if len(t.Setup) > 0 || len(t.Teardown) > 0 {
+				g.w("\n")
+			}
+			g.genSteps(t)
 		}
-		g.genSteps(t)
 		g.w("\t})\n")
 		if i < len(g.TestSuite.Tests)-1 {
 			g.w("\n")
@@ -193,21 +199,26 @@ func (g *Generator) genFileHeader() {
 import (
 	encjson "encoding/json"
 	encyaml "gopkg.in/yaml.v2"
+	"fmt"
 	"context"
 	"crypto/tls"
+	"os"
+	"net/url"
 	"testing"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v8/estransport"
 )
 
 var (
 	// Prevent compilation errors for unused packages
+	_ = fmt.Printf
 	_ = encjson.NewDecoder
 	_ = encyaml.NewDecoder
 	_ = tls.Certificate{}
-	_ = fmt.Printf
+	_ = url.QueryEscape
 )` + "\n")
 }
 
@@ -220,11 +231,13 @@ func (g *Generator) genInitializeClient() {
 				InsecureSkipVerify: true,
 			},
 		},
-		// Logger: &estransport.TextLogger{
-		// 	Output: os.Stdout,
-		// 	// EnableRequestBody:  true,
-		// 	// EnableResponseBody: true,
-		// },
+	}
+	if os.Getenv("DEBUG") != "" {
+		cfg.Logger = &estransport.ColorLogger{
+			Output: os.Stdout,
+			// EnableRequestBody:  true,
+			EnableResponseBody: true,
+		}
 	}
 	es, eserr := elasticsearch.NewClient(cfg)
 	if eserr != nil {
@@ -257,6 +270,7 @@ func (g *Generator) genHelpers() {
 		t.Fatalf("Panic: %s in %s", rec, reLocation.ReplaceAllString(loc, "$1"))
 	}
 }
+_ = recoverPanic
 ` + "\n")
 
 	g.w(`
@@ -358,6 +372,7 @@ func (g *Generator) genCommonSetup() {
 			}
 		}
 	}
+	_ = commonSetup
 
 	`)
 }
@@ -542,7 +557,7 @@ func (g *Generator) genXPackSetup() {
 			}
 
 			{
-				res, _ = es.ILM.RemovePolicy(es.ILM.RemovePolicy.WithIndex("_all"))
+				res, _ = es.ILM.RemovePolicy("_all")
 				if res != nil && res.Body != nil {
 					defer res.Body.Close()
 				}
@@ -596,6 +611,7 @@ func (g *Generator) genXPackSetup() {
 				}
 			}
 		}
+		_ = xpackSetup
 
 	`)
 }
@@ -626,18 +642,19 @@ func (g *Generator) genLocationYAML(t Test) {
 	}
 }
 
-func (g *Generator) genSkip(t Test) {
+func (g *Generator) genSkip(t Test) (skipped bool) {
 	// Check the custom skip list
 	if skips, ok := skipTests[t.BaseFilename()]; ok {
 		if len(skips) < 1 {
 			g.w("\t// Skipping all tests in '" + t.BaseFilename() + "'\n")
 			g.w("\tt.SkipNow()\n\n")
-			return
+			return true
 		}
 
 		for _, skip := range skips {
 			if skip == t.OrigName {
 				g.w("\tt.SkipNow()\n\n")
+				return true
 			}
 		}
 	}
@@ -646,10 +663,14 @@ func (g *Generator) genSkip(t Test) {
 	if t.Skip {
 		if t.SkipInfo != "" {
 			g.w("\tt.Skip(" + strconv.Quote(t.SkipInfo) + ")\n\n")
+			return true
 		} else {
 			g.w("\tt.SkipNow()\n\n")
+			return true
 		}
 	}
+
+	return false
 }
 
 func (g *Generator) genSetupTeardown(actions []Action) {
@@ -947,7 +968,12 @@ func (g *Generator) genAction(a Action, skipBody ...bool) {
 						}
 						value = fmt.Sprintf("%d", dur.Nanoseconds())
 					default:
-						value = fmt.Sprintf("%q", v)
+						if strings.HasSuffix(k, "ID") {
+							value = fmt.Sprintf("url.QueryEscape(%q)", v)
+						} else {
+							value = fmt.Sprintf("%q", v)
+						}
+
 					}
 				}
 				g.w(value)
